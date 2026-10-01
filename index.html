@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>토토네 과외</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="토토네 과외">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#B24F69">
+<meta name="robots" content="noindex">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- 아이폰은 시스템 글꼴을 쓴다. 아래 글꼴은 다른 기기에서 비슷하게 보이게 하는 대체용이라 화면 그리기를 막지 않게 늦게 불러온다 -->
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&family=Nunito:wght@600;700;800&display=swap">
+<style>
+:root {
+  /* 레이아웃: 위는 지금 상태를 색으로 알려주는 히어로(상태바 밑까지 꽉 참), 아래는 둥근 시트에 주간 달력과 그날 수업 목록 */
+  --paper: #FBF7F5;          /* 토토 털빛 바탕 */
+  --card: #FFFFFF;
+  --ink: #2A201D;            /* 토토 코 색 */
+  --ink-2: #74665F;
+  --ink-3: #A99B94;
+  --line: #EFE6E2;
+  --shadow: 0 1px 2px rgb(42 32 29 / .05), 0 8px 24px rgb(42 32 29 / .06);
+  --hero-free: #B24F69;      /* 수업 없음: 토토 배경 분홍을 진하게 */
+  --hero-soon: #2F6CC9;      /* 곧 시작: 파랑 */
+  --hero-busy: #1F7A4D;      /* 수업 중: 초록 */
+  --hero-none: #5B514D;
+  --on-hero: #FFFFFF;
+  --bubble: #FFFFFF;
+  --bubble-ink: #2A201D;
+  --dot-free: #FFFFFF;
+  --dot-soon: #FFD166;
+  --dot-busy: #B8F5D0;
+  --live: #1F7A4D;           /* 목록의 "진행 중" */
+  --danger: #D93A40;
+  --now-bg: #E8F5EE;
+  --next-bg: #F8DEE5;
+  --next-ink: #9C3D57;
+  --notice-bg: #FFF4DE;
+  --notice-ink: #7A4A06;
+  --focus: #B24F69;
+  --font-ui: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  --font-num: ui-rounded, "SF Pro Rounded", "Nunito", -apple-system, "Noto Sans KR", sans-serif;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --hero-now: var(--hero-free);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #141010; --card: #1F1917; --ink: #F4ECE8; --ink-2: #AEA099; --ink-3: #776B66; --line: #2F2725;
+    --shadow: 0 0 0 1px #2F2725;
+    --hero-free: #9E425A; --hero-soon: #2A5DAF; --hero-busy: #19663F; --hero-none: #3E3734;
+    --danger: #FF6B6B; --now-bg: #15301F; --next-bg: #44222D; --next-ink: #F2A9BC; --notice-bg: #3A2C12; --notice-ink: #F6CD84; --focus: #E58BA2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #141010; --card: #1F1917; --ink: #F4ECE8; --ink-2: #AEA099; --ink-3: #776B66; --line: #2F2725;
+  --shadow: 0 0 0 1px #2F2725;
+  --hero-free: #9E425A; --hero-soon: #2A5DAF; --hero-busy: #19663F; --hero-none: #3E3734;
+  --danger: #FF6B6B; --now-bg: #15301F; --next-bg: #44222D; --next-ink: #F2A9BC; --notice-bg: #3A2C12; --notice-ink: #F6CD84; --focus: #E58BA2;
+  color-scheme: dark;
+}
+:root[data-state="soon"] { --hero-now: var(--hero-soon); }
+:root[data-state="busy"] { --hero-now: var(--hero-busy); }
+:root[data-state="none"] { --hero-now: var(--hero-none); }
+:root.is-preview { --safe-top: 50px; --safe-bottom: 20px; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font: 400 15px/1.45 var(--font-ui);
+  color: var(--ink);
+  /* 위로 당기면 히어로 색, 아래로 당기면 바탕색이 보이게 */
+  background: linear-gradient(var(--hero-now) 50%, var(--paper) 50%);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+
+/* 상태바 뒤 색: 아래로 스크롤해도 시계·배터리 글자가 보이게 */
+.statusbar-fill { position: fixed; inset: 0 0 auto 0; height: var(--safe-top); background: var(--hero-now); z-index: 20; transition: background-color .4s; }
+
+/* ---------- 히어로 ---------- */
+.hero {
+  background: var(--hero-now);
+  color: var(--on-hero);
+  padding: calc(var(--safe-top) + 10px) 20px 48px;
+  transition: background-color .4s;
+}
+.hero-top { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; opacity: .9; }
+.eyebrow { display: flex; align-items: center; gap: 8px; margin: 26px 0 0; font-size: 11px; font-weight: 700; letter-spacing: .16em; }
+.eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dot-free); box-shadow: 0 0 0 4px rgb(255 255 255 / .16); }
+.hero[data-state="busy"] .dot { background: var(--dot-busy); animation: onair 1.6s ease-in-out infinite; }
+.hero[data-state="soon"] .dot { background: var(--dot-soon); }
+.hero[data-state="none"] .dot { background: var(--ink-3); }
+@keyframes onair { 50% { box-shadow: 0 0 0 7px rgb(184 245 208 / .3); } }
+.hero h1 { margin: 8px 0 0; font-size: 34px; line-height: 1.15; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
+.detail-card { margin-top: 18px; padding: 14px 16px 15px; border-radius: 18px; background: rgb(255 255 255 / .13); display: grid; gap: 3px; }
+.detail-card .label { font-size: 12px; font-weight: 600; opacity: .72; }
+.detail-card .who { font-size: 21px; font-weight: 700; letter-spacing: -.01em; }
+.detail-card .who small { font-size: 15px; font-weight: 500; opacity: .74; margin-left: 6px; }
+.detail-card .when { font-size: 15px; font-weight: 600; opacity: .92; }
+.progress { height: 6px; margin-top: 9px; border-radius: 3px; background: rgb(255 255 255 / .22); overflow: hidden; }
+.progress span { display: block; height: 100%; width: calc(var(--p, 0) * 100%); background: var(--on-hero); border-radius: 3px; }
+.more { margin-top: 6px; font-size: 13px; opacity: .8; }
+.toto-says { display: flex; align-items: flex-end; gap: 10px; margin-top: 18px; }
+.toto-says img { width: 46px; height: 46px; flex: none; border-radius: 50%; object-fit: cover; border: 2px solid rgb(255 255 255 / .9); }
+.bubble { margin: 0 0 4px; padding: 9px 14px; border-radius: 18px 18px 18px 5px; background: var(--bubble); color: var(--bubble-ink); font-size: 14px; font-weight: 600; min-width: 0; }
+
+/* ---------- 시트 ---------- */
+.sheet {
+  position: relative;
+  margin-top: -26px;
+  min-height: 62vh;
+  padding: 16px 16px calc(28px + var(--safe-bottom));
+  border-radius: 26px 26px 0 0;
+  background: var(--paper);
+}
+.notice { margin: 4px 0 14px; padding: 11px 14px; border-radius: 14px; background: var(--notice-bg); color: var(--notice-ink); font-size: 13px; font-weight: 500; }
+.week-nav { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; text-align: center; }
+.week-nav h2 { margin: 0; font-size: 17px; font-weight: 700; }
+.week-nav p { margin: 1px 0 0; font-size: 13px; color: var(--ink-2); }
+.icon-btn { width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--ink); }
+.icon-btn svg { width: 20px; height: 20px; }
+.icon-btn:disabled { color: var(--line); cursor: default; }
+.days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-top: 8px; }
+.day-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 0 10px; border: 0; border-radius: 16px; background: transparent; }
+.day-btn .wd { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.day-btn .d { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; font-size: 17px; font-weight: 700; }
+.day-btn.is-past .d { color: var(--ink-3); }
+.day-btn.is-today .d { background: var(--ink); color: var(--paper); }
+.day-btn.is-selected { background: var(--card); box-shadow: var(--shadow); }
+.dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; max-width: 34px; min-height: 5px; }
+.dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--c, var(--ink-3)); }
+
+.day-title { display: flex; justify-content: space-between; align-items: baseline; margin: 22px 4px 10px; font-size: 15px; font-weight: 700; }
+.day-title span { font-size: 13px; font-weight: 500; color: var(--ink-2); }
+.lessons { margin: 0; padding: 0; list-style: none; border-radius: 20px; background: var(--card); box-shadow: var(--shadow); overflow: hidden; }
+.lesson { position: relative; display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 13px 16px; }
+.lesson + .lesson::before { content: ""; position: absolute; top: 0; left: 80px; right: 0; border-top: 1px solid var(--line); }
+.lesson .time b { display: block; font-size: 17px; font-weight: 700; line-height: 1.2; }
+.lesson .time span { font-size: 13px; color: var(--ink-3); }
+.lesson .name { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 17px; font-weight: 600; }
+.lesson .name::before { content: ""; width: 10px; height: 10px; flex: none; border-radius: 50%; background: var(--c, var(--ink-3)); }
+.lesson .sub { margin: 1px 0 0 18px; font-size: 13px; color: var(--ink-2); overflow-wrap: anywhere; }
+.tag { padding: 4px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.lesson.is-now { background: var(--now-bg); }
+.lesson.is-now .tag { background: var(--live); color: var(--on-hero); }
+.lesson.is-next .tag { background: var(--next-bg); color: var(--next-ink); }
+.lesson.is-past { color: var(--ink-3); }
+.lesson.is-past .name, .lesson.is-past .sub, .lesson.is-past .time b { color: var(--ink-3); }
+.lesson.is-past .name::before { opacity: .45; }
+.lesson.is-past .tag { color: var(--ink-3); padding-inline: 0; }
+.empty { padding: 26px 16px; text-align: center; color: var(--ink-2); font-size: 14px; }
+
+.foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 18px; padding: 0 4px; font-size: 12px; color: var(--ink-2); }
+.foot a { color: var(--ink-2); }
+.pill-btn { flex: none; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--ink); font-size: 13px; font-weight: 600; }
+.pill-btn:disabled { color: var(--ink-3); }
+
+/* ---------- 처음 연결 / 불러오는 중 ---------- */
+.overlay { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: calc(var(--safe-top) + 24px) 24px calc(var(--safe-bottom) + 24px); background: var(--paper); text-align: center; }
+.overlay .inner { width: min(100%, 340px); display: grid; justify-items: center; gap: 10px; }
+.overlay img { width: 112px; height: 112px; border-radius: 50%; object-fit: cover; box-shadow: var(--shadow); }
+.overlay h2 { margin: 10px 0 0; font-size: 22px; font-weight: 800; }
+.overlay p { margin: 0; color: var(--ink-2); font-size: 14px; }
+.overlay form { width: 100%; display: grid; gap: 10px; margin-top: 14px; }
+.overlay input { width: 100%; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--ink); font: 600 17px var(--font-num); text-align: center; letter-spacing: .04em; }
+.primary { padding: 14px 16px; border: 0; border-radius: 14px; background: var(--hero-free); color: var(--on-hero); font-size: 16px; font-weight: 700; }
+.error { color: var(--danger) !important; font-weight: 600; }
+.loading img { animation: bob 1.4s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-6px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="statusbar-fill" aria-hidden="true"></div>
+
+<header class="hero" id="hero" data-state="none">
+  <div class="hero-top"><span>토토네 과외</span><span id="today" class="num"></span></div>
+  <p class="eyebrow"><span class="dot" aria-hidden="true"></span><span id="eyebrow"></span></p>
+  <h1 id="headline">시간표 가져오는 중</h1>
+  <div class="detail-card" id="detailCard" hidden>
+    <span class="label" id="label"></span>
+    <span class="who" id="who"></span>
+    <span class="when num" id="when"></span>
+    <div class="progress" id="progress" hidden><span></span></div>
+    <span class="more" id="more" hidden></span>
+  </div>
+  <div class="toto-says">
+    <img src="toto.jpg" alt="토토">
+    <p class="bubble" id="totoLine">잠깐만 기다려 주세요!</p>
+  </div>
+</header>
+
+<main class="sheet">
+  <p class="notice" id="notice" role="status" hidden></p>
+  <div id="schedule" hidden>
+    <section aria-label="주간 달력">
+      <div class="week-nav">
+        <button class="icon-btn" id="prevWeek" type="button" aria-label="이전 주"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <div><h2 id="weekTitle"></h2><p id="weekRange" class="num"></p></div>
+        <button class="icon-btn" id="nextWeek" type="button" aria-label="다음 주"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+      <div class="days" id="days"></div>
+    </section>
+    <section aria-label="그날 수업">
+      <h3 class="day-title"><span id="dayName"></span><span id="dayCount"></span></h3>
+      <ol class="lessons" id="lessons"></ol>
+    </section>
+  </div>
+  <footer class="foot">
+    <span id="updated"></span>
+    <button class="pill-btn" id="refresh" type="button">새로고침</button>
+  </footer>
+</main>
+
+<div class="overlay" id="setup" hidden>
+  <div class="inner">
+    <img src="toto.jpg" alt="">
+    <h2>토토네 과외</h2>
+    <p>처음 한 번만 연결 코드를 넣어 주세요.</p>
+    <form id="setupForm">
+      <input id="codeInput" name="code" aria-label="연결 코드" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="연결 코드">
+      <button class="primary" type="submit">연결하기</button>
+    </form>
+    <p id="setupError" class="error" hidden></p>
+  </div>
+</div>
+
+<div class="overlay loading" id="loading" hidden>
+  <div class="inner">
+    <img src="toto.jpg" alt="">
+    <h2>시간표 가져오는 중</h2>
+    <p>엄마 시트를 보고 있어요.</p>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // 시트를 읽어 주는 구글 스크립트 주소. 연결 코드 없이는 데이터를 주지 않는다.
+  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbyAjklWCqCvWsOD8Yc4MKf5dmVERnnIYYCoCEelhuV1Z-MvWmtbfjZ8f9umEoEKvm1k/exec';
+  const CODE_KEY = 'toto.code';
+  const CACHE_KEY = 'toto.cache.v1';
+  const SOON_MIN = 15;          // 수업 몇 분 전부터 "곧 시작"
+  const CHAIN_GAP_MIN = 10;     // 이 정도 쉬는 시간이면 "이어서" 수업으로 본다
+  const REFRESH_MS = 5 * 60 * 1000;
+  const WD = ['월', '화', '수', '목', '금', '토', '일'];
+  const PREVIEW = new URLSearchParams(location.search).has('preview');
+
+  const $ = id => document.getElementById(id);
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+    del(k) { try { localStorage.removeItem(k); } catch (e) {} },
+  };
+
+  let payload = null;     // { weeks: [{ monday, days: [{ date, lessons: [{ start, end, name, detail, color }] }] }], sheetUrl }
+  let fetchedAt = null;
+  let notice = '';
+  let previewNow = null;
+  let view = { monday: null, date: null };
+  let loading = false;
+  let lastFetch = 0;
+
+  // ---------- 시간 (항상 한국 시간) ----------
+  const dayNum = iso => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / 864e5;
+  const weekdayIdx = iso => (new Date(dayNum(iso) * 864e5).getUTCDay() + 6) % 7;
+  const abs = (iso, min) => dayNum(iso) * 1440 + min;
+  const clock = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+  const md = iso => `${+iso.slice(5, 7)}월 ${+iso.slice(8, 10)}일`;
+  const duration = m => {
+    const h = Math.floor(m / 60), r = m % 60;
+    return h ? (r ? `${h}시간 ${r}분` : `${h}시간`) : `${r}분`;
+  };
+  function relDay(iso, today) {
+    const d = dayNum(iso) - dayNum(today);
+    if (d === 0) return '오늘';
+    if (d === 1) return '내일';
+    if (d === 2) return '모레';
+    return `${+iso.slice(5, 7)}/${+iso.slice(8, 10)}(${WD[weekdayIdx(iso)]})`;
+  }
+  const kstParts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  function toKst(ms) {
+    const p = kstParts.formatToParts(new Date(ms));
+    const g = t => p.find(x => x.type === t).value;
+    return { date: `${g('year')}-${g('month')}-${g('day')}`, min: +g('hour') * 60 + +g('minute') };
+  }
+  const now = () => previewNow || toKst(Date.now());
+
+  // ---------- 데이터 ----------
+  const weeks = () => (payload && payload.weeks) || [];
+  function allLessons() {
+    const out = [];
+    weeks().forEach(w => w.days.forEach(d => d.lessons.forEach(l => {
+      out.push(Object.assign({}, l, { date: d.date, s: abs(d.date, l.start), e: abs(d.date, l.end) }));
+    })));
+    return out.sort((a, b) => a.s - b.s);
+  }
+
+  function heroModel(t) {
+    const list = allLessons();
+    const n = abs(t.date, t.min);
+    const cur = list.find(l => l.s <= n && n < l.e);
+    if (cur) {
+      let end = cur.e, more = 0;
+      for (const l of list) {
+        if (l.s > cur.s && l.s <= end + CHAIN_GAP_MIN && l.e > end) { end = l.e; more++; }
+      }
+      return {
+        state: 'busy', eyebrow: 'EN CLASE', headline: '수업 중', label: '지금 수업', who: cur,
+        when: `${clock(cur.end)}에 끝나요 · ${duration(cur.e - n)} 남음`,
+        progress: (n - cur.s) / (cur.e - cur.s),
+        more: more ? `이어서 ${more}개 더 · ${clock(end - dayNum(cur.date) * 1440)}에 모두 끝나요` : '',
+        toto: '쉿! 엄마 수업 중이에요',
+      };
+    }
+    const next = list.find(l => l.s > n);
+    if (next && next.s - n <= SOON_MIN) {
+      return {
+        state: 'soon', eyebrow: 'PRONTO', headline: '곧 수업 시작', label: '곧 시작', who: next,
+        when: `${clock(next.start)} 시작 · ${duration(next.s - n)} 후`,
+        toto: '곧 수업이에요. 조용히 해 주세요!',
+      };
+    }
+    const todayKnown = weeks().some(w => w.days.some(d => d.date === t.date));
+    if (!todayKnown) {
+      return {
+        state: 'none', eyebrow: 'SIN HORARIO', headline: '이번 주 시간표가 없어요', label: '', who: null,
+        when: '시트에 오늘 날짜가 적힌 탭이 아직 없어요', toto: '엄마한테 물어볼까요?',
+      };
+    }
+    const nextInfo = next
+      ? { label: '다음 수업', who: next, when: `${relDay(next.date, t.date)} ${clock(next.start)}` + (next.s - n < 1440 ? ` · ${duration(next.s - n)} 후` : '') }
+      : { label: '', who: null, when: '시트에 다음 수업이 아직 없어요' };
+    const hadToday = list.some(l => l.date === t.date);
+    if (next && next.date === t.date) return Object.assign({ state: 'free', eyebrow: 'LIBRE', headline: '지금은 수업 없어요', toto: '지금은 엄마랑 놀 수 있어요!' }, nextInfo);
+    if (hadToday) return Object.assign({ state: 'free', eyebrow: 'HASTA MAÑANA', headline: '오늘 수업 끝', toto: '오늘은 엄마랑 실컷 놀아요!' }, nextInfo);
+    return Object.assign({ state: 'free', eyebrow: 'DÍA LIBRE', headline: '오늘은 수업 없는 날', toto: '오늘은 하루 종일 엄마랑 놀아요!' }, nextInfo);
+  }
+
+  // ---------- 그리기 ----------
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function colorVar(e, color) { if (color) e.style.setProperty('--c', color); }
+
+  function renderHero(t) {
+    const h = payload
+      ? heroModel(t)
+      : { state: 'none', eyebrow: 'CARGANDO', headline: '시간표 가져오는 중', label: '', who: null, when: '', toto: '잠깐만 기다려 주세요!' };
+    $('hero').dataset.state = h.state;
+    document.documentElement.dataset.state = h.state;
+    $('today').textContent = `${md(t.date)} ${WD[weekdayIdx(t.date)]}요일`;
+    $('eyebrow').textContent = h.eyebrow;
+    $('headline').textContent = h.headline;
+    $('label').textContent = h.label || '';
+    $('label').hidden = !h.label;
+    const who = $('who');
+    who.replaceChildren();
+    if (h.who) {
+      who.append(h.who.name);
+      if (h.who.detail) who.append(el('small', null, h.who.detail));
+    }
+    who.hidden = !h.who;
+    $('when').textContent = h.when || '';
+    $('progress').hidden = h.progress == null;
+    if (h.progress != null) $('progress').style.setProperty('--p', Math.max(0, Math.min(1, h.progress)).toFixed(3));
+    $('more').textContent = h.more || '';
+    $('more').hidden = !h.more;
+    $('detailCard').hidden = !h.who && !h.when;
+    $('totoLine').textContent = h.toto;
+  }
+
+  function ensureView(t) {
+    const ws = weeks();
+    if (view.monday && ws.some(w => w.monday === view.monday)) return;
+    const tn = dayNum(t.date);
+    const w = ws.find(x => tn >= dayNum(x.monday) && tn < dayNum(x.monday) + 7)
+      || ws.find(x => dayNum(x.monday) > tn)
+      || ws[ws.length - 1];
+    view.monday = w.monday;
+    view.date = w.days.some(d => d.date === t.date) ? t.date : w.days[0].date;
+  }
+
+  function renderWeek(t) {
+    const ws = weeks();
+    const i = ws.findIndex(w => w.monday === view.monday);
+    const w = ws[i];
+    $('prevWeek').disabled = i <= 0;
+    $('nextWeek').disabled = i >= ws.length - 1;
+    const thisMonday = dayNum(t.date) - weekdayIdx(t.date);
+    const diff = Math.round((dayNum(w.monday) - thisMonday) / 7);
+    $('weekTitle').textContent = diff === 0 ? '이번 주' : diff === 1 ? '다음 주' : diff === -1 ? '지난 주' : diff > 0 ? `${diff}주 뒤` : `${-diff}주 전`;
+    $('weekRange').textContent = `${md(w.days[0].date)} – ${md(w.days[6].date)}`;
+
+    const box = $('days');
+    box.replaceChildren();
+    w.days.forEach((d, k) => {
+      const b = el('button', 'day-btn');
+      b.type = 'button';
+      if (d.date === t.date) b.classList.add('is-today');
+      else if (dayNum(d.date) < dayNum(t.date)) b.classList.add('is-past');
+      if (d.date === view.date) b.classList.add('is-selected');
+      b.setAttribute('aria-pressed', d.date === view.date ? 'true' : 'false');
+      b.setAttribute('aria-label', `${md(d.date)} ${WD[k]}요일, 수업 ${d.lessons.length}개`);
+      b.append(el('span', 'wd', WD[k]), el('span', 'd num', String(+d.date.slice(8, 10))));
+      const dots = el('span', 'dots');
+      d.lessons.slice(0, 8).forEach(l => { const dot = el('i'); colorVar(dot, l.color); dots.append(dot); });
+      b.append(dots);
+      b.addEventListener('click', () => { view.date = d.date; render(); });
+      box.append(b);
+    });
+  }
+
+  function renderDay(t) {
+    const w = weeks().find(x => x.monday === view.monday);
+    const d = w.days.find(x => x.date === view.date) || w.days[0];
+    $('dayName').textContent = `${md(d.date)} ${WD[weekdayIdx(d.date)]}요일`;
+    $('dayCount').textContent = d.lessons.length ? `수업 ${d.lessons.length}개` : '';
+    const n = abs(t.date, t.min);
+    const next = allLessons().find(l => l.s > n);
+    const ol = $('lessons');
+    ol.replaceChildren();
+    if (!d.lessons.length) {
+      ol.append(el('li', 'empty', '수업이 없는 날이에요'));
+      return;
+    }
+    d.lessons.forEach(l => {
+      const s = abs(d.date, l.start), e = abs(d.date, l.end);
+      const li = el('li', 'lesson');
+      let tag = '';
+      if (e <= n) { li.classList.add('is-past'); tag = '끝'; }
+      else if (s <= n) { li.classList.add('is-now'); tag = '진행 중'; }
+      else if (next && next.date === d.date && next.start === l.start) { li.classList.add('is-next'); tag = '다음'; }
+      const time = el('div', 'time num');
+      time.append(el('b', null, clock(l.start)), el('span', null, clock(l.end)));
+      const info = el('div', 'info');
+      const name = el('p', 'name', l.name);
+      colorVar(name, l.color);
+      info.append(name);
+      if (l.detail) info.append(el('p', 'sub', l.detail));
+      li.append(time, info, el('span', 'tag', tag));
+      ol.append(li);
+    });
+  }
+
+  function renderFoot(t) {
+    const k = PREVIEW ? t : fetchedAt ? toKst(fetchedAt) : null; // 미리보기는 "방금 읽었다"고 본다
+    $('updated').textContent = k ? `시트에서 읽음 · ${relDay(k.date, t.date)} ${clock(k.min)}` : '';
+    $('refresh').disabled = loading;
+    $('refresh').textContent = loading ? '가져오는 중…' : '새로고침';
+    $('notice').textContent = notice;
+    $('notice').hidden = !notice;
+  }
+
+  function render() {
+    const t = now();
+    renderHero(t);
+    const has = weeks().length > 0;
+    $('schedule').hidden = !has;
+    if (has) { ensureView(t); renderWeek(t); renderDay(t); }
+    renderFoot(t);
+  }
+
+  function moveWeek(step) {
+    const ws = weeks();
+    const i = ws.findIndex(w => w.monday === view.monday);
+    const target = ws[i + step];
+    if (!target) return;
+    const k = weekdayIdx(view.date);
+    view.monday = target.monday;
+    view.date = target.days[k].date;
+    render();
+  }
+
+  // ---------- 시트 가져오기 ----------
+  async function refresh() {
+    if (PREVIEW || loading) return;
+    const code = store.get(CODE_KEY);
+    if (!code) { showSetup(); return; }
+    if (!ENDPOINT) { notice = '앱 설정이 아직 끝나지 않았어요.'; render(); return; }
+    loading = true;
+    render();
+    try {
+      const res = await fetch(`${ENDPOINT}?code=${encodeURIComponent(code)}&t=${Date.now()}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (data.ok) {
+        payload = data;
+        fetchedAt = Date.now();
+        notice = '';
+        store.set(CACHE_KEY, JSON.stringify({ payload, fetchedAt }));
+      } else if (data.error === 'bad_code') {
+        payload = null;
+        store.del(CODE_KEY);
+        store.del(CACHE_KEY);
+        showSetup('연결 코드가 맞지 않아요. 다시 확인해 주세요.');
+      } else if (data.error === 'sheet_unreadable') {
+        notice = '엄마 시트를 읽을 수 없어요. 시트 공유 설정이 바뀌었는지 확인해 주세요.';
+      } else {
+        notice = '시간표를 새로 가져오지 못했어요. 잠시 뒤 새로고침을 눌러 주세요.';
+      }
+    } catch (err) {
+      notice = payload
+        ? '인터넷에 연결되지 않아서 마지막으로 가져온 시간표를 보여드려요.'
+        : '인터넷에 연결되지 않았어요. 연결되면 새로고침을 눌러 주세요.';
+    } finally {
+      loading = false;
+      lastFetch = Date.now();
+      $('loading').hidden = true;
+      render();
+    }
+  }
+
+  function showSetup(message) {
+    $('loading').hidden = true;
+    $('setup').hidden = false;
+    $('setupError').textContent = message || '';
+    $('setupError').hidden = !message;
+  }
+
+  $('setupForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const code = $('codeInput').value.trim();
+    if (!code) return;
+    store.set(CODE_KEY, code);
+    $('setup').hidden = true;
+    if (!payload) $('loading').hidden = false;
+    refresh();
+  });
+  $('refresh').addEventListener('click', () => refresh());
+  $('prevWeek').addEventListener('click', () => moveWeek(-1));
+  $('nextWeek').addEventListener('click', () => moveWeek(1));
+
+  function boot() {
+    const fromLink = location.hash.match(/^#code=(.+)$/);
+    if (fromLink) store.set(CODE_KEY, decodeURIComponent(fromLink[1]));
+    try {
+      const cached = JSON.parse(store.get(CACHE_KEY) || 'null');
+      if (cached && cached.payload) { payload = cached.payload; fetchedAt = cached.fetchedAt; }
+    } catch (e) {}
+    render();
+    if (!store.get(CODE_KEY)) { showSetup(); return; }
+    if (!payload) $('loading').hidden = false;
+    refresh();
+  }
+
+  setInterval(() => {
+    render();
+    if (document.visibilityState === 'visible' && Date.now() - lastFetch > REFRESH_MS) refresh();
+  }, 20000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    render();
+    if (Date.now() - lastFetch > 60000) refresh();
+  });
+
+  if (PREVIEW) {
+    // 미리보기 화면이 데이터와 시각을 넣어 준다. 실제 앱에서는 쓰지 않는다.
+    document.documentElement.classList.add('is-preview');
+    window.addEventListener('message', e => {
+      const m = e.data;
+      if (!m || m.type !== 'toto-preview') return;
+      payload = m.payload;
+      previewNow = m.now;
+      if (m.theme) document.documentElement.dataset.theme = m.theme;
+      if (m.overlay) $(m.overlay).hidden = false;
+      render();
+    });
+    render();
+  } else {
+    boot();
+  }
+})();
+</script>
+</body>
+</html>

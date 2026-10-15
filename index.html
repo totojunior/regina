@@ -19,7 +19,7 @@
 <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&family=Nunito:wght@600;700;800&display=swap">
 <style>
 :root {
-  /* 레이아웃: 위는 지금 상태를 색으로 알려주는 히어로(상태바 밑까지 꽉 참), 아래는 둥근 시트에 주간 달력과 그날 수업 목록 */
+  /* 레이아웃: 위는 지금 상태를 색으로 알려주는 히어로(상태바 밑까지 꽉 참), 아래는 둥근 시트에 주간 달력, 그날 수업 목록, 번 돈 카드 */
   --paper: #FBF7F5;          /* 토토 털빛 바탕 */
   --card: #FFFFFF;
   --ink: #2A201D;            /* 토토 코 색 */
@@ -171,8 +171,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .pill-btn { flex: none; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--ink); font-size: 13px; font-weight: 600; }
 .pill-btn:disabled { color: var(--ink-3); }
 
-/* ---------- 번 돈: 오늘 / 이번 달 카드, 누르면 토토의 장부 ---------- */
-.money { width: 100%; display: flex; align-items: center; margin: 4px 0 16px; padding: 13px 4px 13px 16px; border: 0; border-radius: 20px; background: var(--card); box-shadow: var(--shadow); text-align: left; }
+/* ---------- 번 돈: 시간표 아래 오늘 / 이번 달 카드, 누르면 번 돈 장부 ---------- */
+.money { width: 100%; display: flex; align-items: center; margin: 14px 0 0; padding: 13px 4px 13px 16px; border: 0; border-radius: 20px; background: var(--card); box-shadow: var(--shadow); text-align: left; }
 .money .stat { flex: 1; min-width: 0; display: grid; gap: 1px; }
 .money .stat + .stat { margin-left: 14px; padding-left: 14px; border-left: 1px solid var(--line); }
 .money .k { font-size: 12px; font-weight: 600; color: var(--ink-2); }
@@ -256,11 +256,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 <main class="sheet">
   <p class="notice" id="notice" role="status" hidden></p>
-  <button class="money" id="money" type="button" aria-haspopup="dialog" hidden>
-    <span class="stat"><span class="k">오늘 번 돈</span><span class="won" id="todayWon"></span><span class="s" id="todaySub"></span></span>
-    <span class="stat"><span class="k" id="monthKey"></span><span class="won" id="monthWon"></span><span class="s" id="monthSub"></span></span>
-    <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>
-  </button>
   <div id="schedule" hidden>
     <section aria-label="주간 달력">
       <div class="week-nav">
@@ -275,6 +270,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
       <ol class="lessons" id="lessons"></ol>
     </section>
   </div>
+  <button class="money" id="money" type="button" aria-haspopup="dialog" hidden>
+    <span class="stat"><span class="k">오늘 번 돈</span><span class="won" id="todayWon"></span><span class="s" id="todaySub"></span></span>
+    <span class="stat"><span class="k" id="monthKey"></span><span class="won" id="monthWon"></span><span class="s" id="monthSub"></span></span>
+    <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>
+  </button>
   <footer class="foot">
     <span id="updated"></span>
     <button class="pill-btn" id="refresh" type="button">새로고침</button>
@@ -285,15 +285,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
   <header class="hero">
     <div class="hero-top"><span>토토네 과외</span><button class="icon-btn" id="bookClose" type="button" aria-label="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <p class="eyebrow"><span class="dot" aria-hidden="true"></span><span>GANANCIAS</span></p>
-    <h2 id="bookTitle">토토의 장부</h2>
-    <div class="toto-says">
-      <img src="toto.jpg" alt="토토">
-      <p class="bubble" id="bookToto"></p>
-    </div>
+    <h2 id="bookTitle">번 돈 장부</h2>
   </header>
   <div class="sheet">
     <div id="bookYears"></div>
-    <p class="book-note">시간표에 적힌 수업과 요금표(시간당 요금)로 셈한 돈이라 실제로 받은 돈과는 다를 수 있어요. 지나간 날은 토토가 매일 밤 장부에 옮겨 적어 둬요.</p>
+    <p class="book-note">시간표에 적힌 수업과 요금표(시간당 요금)로 셈한 돈이라 실제로 받은 돈과는 다를 수 있어요. 지나간 날은 매일 밤 장부에 옮겨 적어 둬서 시트 탭이 바뀌어도 남아요.</p>
   </div>
 </div>
 
@@ -391,10 +387,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
   }
   const won = man => wonParts(man).map(p => p.join('')).join(' ');
   const monthName = key => `${+key.slice(5, 7)}월`;
-  function prevMonth(key) {
-    const y = +key.slice(0, 4), m = +key.slice(5, 7);
-    return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
-  }
 
   // ---------- 데이터 ----------
   const weeks = () => (payload && payload.weeks) || [];
@@ -432,20 +424,17 @@ button { font: inherit; color: inherit; cursor: pointer; }
       if (done && l.date >= lg.today && l.date >= lg.since) addLesson(month(l.date.slice(0, 7)), l);
     });
     const cur = month(t.date.slice(0, 7));
-    const prev = months[prevMonth(cur.month)];
     return {
       today,
       month: cur,
-      prev,
       months: Object.keys(months).sort().reverse().map(k => months[k]),
-      closing: +t.date.slice(8) <= 3 && prev && prev.amount > 0 ? prev : null, // 새 달 첫 사흘은 지난달 결산
     };
   }
 
-  // 수업 중 대사는 그 수업 동안 바뀌지 않게 시작 시각으로 고른다
-  const BUSY_TOTO = ['쉿! 엄마 수업 중이에요', '쉿! 엄마 지금 돈 버는 중이에요', '쉿! 조용히 하면 토토 간식이 늘어나요'];
+  // 토토는 돈 얘기를 하지 않는다. 수업 중 대사는 그 수업 동안 바뀌지 않게 시작 시각으로 고른다
+  const BUSY_TOTO = ['쉿! 엄마 수업 중이에요', '쉿! 조용히 하면 토토 간식이 늘어나요'];
 
-  function heroModel(t, money) {
+  function heroModel(t) {
     const list = allLessons();
     const n = abs(t.date, t.min);
     const cur = list.find(l => l.s <= n && n < l.e);
@@ -481,13 +470,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
       ? { label: '다음 수업', who: next, when: `${relDay(next.date, t.date)} ${clock(next.start)}` + (next.s - n < 1440 ? ` · ${duration(next.s - n)} 후` : '') }
       : { label: '', who: null, when: '시트에 다음 수업이 아직 없어요' };
     const hadToday = list.some(l => l.date === t.date);
-    const earned = money && money.today.amount;
-    let h;
-    if (next && next.date === t.date) h = Object.assign({ state: 'free', eyebrow: 'LIBRE', headline: '지금은 수업 없어요', toto: '지금은 엄마랑 놀 수 있어요!' }, nextInfo);
-    else if (hadToday) h = Object.assign({ state: 'free', eyebrow: 'HASTA MAÑANA', headline: '오늘 수업 끝', toto: earned ? `오늘 ${won(earned)} 벌었어요! 이제 엄마랑 실컷 놀아요` : '오늘은 엄마랑 실컷 놀아요!' }, nextInfo);
-    else h = Object.assign({ state: 'free', eyebrow: 'DÍA LIBRE', headline: '오늘은 수업 없는 날', toto: '오늘은 하루 종일 엄마랑 놀아요!' }, nextInfo);
-    if (money && money.closing) h.toto = `${monthName(money.closing.month)} 결산 ${won(money.closing.amount)}! 토토 월급은 언제 나와요?`;
-    return h;
+    if (next && next.date === t.date) return Object.assign({ state: 'free', eyebrow: 'LIBRE', headline: '지금은 수업 없어요', toto: '지금은 엄마랑 놀 수 있어요!' }, nextInfo);
+    if (hadToday) return Object.assign({ state: 'free', eyebrow: 'HASTA MAÑANA', headline: '오늘 수업 끝', toto: '오늘은 엄마랑 실컷 놀아요!' }, nextInfo);
+    return Object.assign({ state: 'free', eyebrow: 'DÍA LIBRE', headline: '오늘은 수업 없는 날', toto: '오늘은 하루 종일 엄마랑 놀아요!' }, nextInfo);
   }
 
   // ---------- 그리기 ----------
@@ -507,9 +492,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
     });
   }
 
-  function renderHero(t, money) {
+  function renderHero(t) {
     const h = payload
-      ? heroModel(t, money)
+      ? heroModel(t)
       : { state: 'none', eyebrow: 'CARGANDO', headline: '시간표 가져오는 중', label: '', who: null, when: '', toto: '잠깐만 기다려 주세요!' };
     $('hero').dataset.state = h.state;
     document.documentElement.dataset.state = h.state;
@@ -630,21 +615,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
     $('monthSub').textContent = month.lessons ? `수업 ${month.lessons}개 · ${duration(month.minutes)}` : '이제 시작이에요';
   }
 
-  // ---------- 토토의 장부 ----------
-  function bookLine(t, money) {
-    const m = money.month, p = money.prev;
-    if (!m.lessons) {
-      return p && p.amount
-        ? `${monthName(p.month)}엔 ${won(p.amount)} 벌었어요. ${monthName(m.month)} 장부는 이제 시작!`
-        : `${monthName(m.month)} 장부는 아직 텅 비었어요. 첫 수업을 기다려요!`;
-    }
-    if (p && m.amount > p.amount) return '벌써 지난달보다 많이 벌었어요! 토토 꼬리가 프로펠러가 됐어요';
-    const count = (n, per) => Math.floor(n * 10000 / per).toLocaleString('ko-KR');
-    return +t.date.slice(8) % 2
-      ? `${monthName(m.month)}엔 벌써 ${won(m.amount)}! 개껌 ${count(m.amount, 2000)}개 값이에요. 토토는 딱 하나만요`
-      : `${monthName(m.month)}엔 벌써 ${won(m.amount)}! 토토 간식 ${count(m.amount, 5000)}봉지 값이에요`;
-  }
-
+  // ---------- 번 돈 장부 ----------
   function monthRow(m, current, max) {
     const d = el('details', 'month');
     const s = el('summary');
@@ -685,7 +656,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
   }
 
   function renderBook(t, money) {
-    $('bookToto').textContent = bookLine(t, money);
     const sig = t.date + JSON.stringify(money.months);
     if (sig === bookSig) return; // 같은 내용이면 다시 그리지 않는다(펼친 달, 스크롤 유지)
     bookSig = sig;
@@ -723,7 +693,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   function render() {
     const t = now();
     const money = moneyModel(t);
-    renderHero(t, money);
+    renderHero(t);
     renderMoney(money);
     const has = weeks().length > 0;
     $('schedule').hidden = !has;

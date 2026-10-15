@@ -209,10 +209,22 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .m-bar i { display: block; height: 100%; width: calc(var(--w, 0) * 100%); border-radius: 3px; background: var(--hero-free); }
 .m-sub { grid-column: 1 / 3; font-size: 13px; color: var(--ink-2); }
 .m-list { margin: 0; padding: 0 16px 6px; list-style: none; }
-.m-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: baseline; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 15px; }
-.m-list .who { font-weight: 600; overflow-wrap: anywhere; }
-.m-list .hrs { font-size: 12px; color: var(--ink-3); }
-.m-list .won { font-size: 15px; font-weight: 700; }
+.m-list > li { border-top: 1px solid var(--line); }
+/* 학생 줄: 누르면 그 달의 수업 하나하나(날짜·시각·금액)가 펼쳐진다 */
+.student summary { display: block; padding: 9px 0; list-style: none; cursor: pointer; }
+.student summary::-webkit-details-marker { display: none; }
+.s-head { display: grid; grid-template-columns: minmax(0, 1fr) auto auto 12px; align-items: baseline; gap: 10px; font-size: 15px; }
+.s-head .who { font-weight: 600; overflow-wrap: anywhere; }
+.s-head .who small { margin-left: 5px; font-size: 12px; font-weight: 500; color: var(--ink-3); }
+.s-head .hrs { font-size: 12px; color: var(--ink-3); }
+.s-head .won { font-size: 15px; font-weight: 700; }
+.s-chev { align-self: center; justify-self: center; width: 6px; height: 6px; margin-top: -3px; border: solid var(--ink-3); border-width: 0 2px 2px 0; transform: rotate(45deg); transition: transform .2s; }
+.student[open] .s-chev { margin-top: 3px; transform: rotate(-135deg); }
+.student.is-empty summary { cursor: default; }
+.student.is-empty .s-chev { visibility: hidden; }
+.s-list { margin: 0; padding: 0 22px 10px 12px; list-style: none; }
+.s-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 4px 0; font-size: 14px; color: var(--ink-2); }
+.s-list .won { font-size: 13px; font-weight: 600; color: var(--ink-2); }
 .m-note { margin: -2px 16px 14px; font-size: 12px; color: var(--ink-3); }
 .book-note { margin: 18px 6px 0; font-size: 12px; line-height: 1.55; color: var(--ink-3); word-break: keep-all; }
 
@@ -335,7 +347,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
     del(k) { try { localStorage.removeItem(k); } catch (e) {} },
   };
 
-  let payload = null;     // { weeks: [{ monday, days: [{ date, lessons: [{ start, end, name, detail, color, rate }] }] }], ledger }
+  let payload = null;     // { weeks: [{ monday, days: [{ date, lessons: [{ start, end, name, detail, color, rate }] }] }], ledger: { since, today, months: [{ month, amount, minutes, lessons, unpriced, students: [{ name, detail, amount, minutes, lessons, items: [{ date, start, end, amount }] }] }] } }
   let fetchedAt = null;
   let notice = '';
   let previewNow = null;
@@ -403,15 +415,18 @@ button { font: inherit; color: inherit; cursor: pointer; }
   function addLesson(m, l) {
     if (l.rate == null) { m.unpriced++; return; }
     let s = m.students.find(x => x.name === l.name);
-    if (!s) m.students.push(s = { name: l.name, amount: 0, minutes: 0, lessons: 0 });
+    if (!s) m.students.push(s = { name: l.name, detail: '', amount: 0, minutes: 0, lessons: 0, items: [] });
+    if (l.detail && !s.detail) s.detail = l.detail;
     m.amount += pay(l); m.minutes += l.e - l.s; m.lessons++;
     s.amount += pay(l); s.minutes += l.e - l.s; s.lessons++;
+    s.items.push({ date: l.date, start: l.start, end: l.end, amount: pay(l) });
   }
   function moneyModel(t) {
     const lg = payload && payload.ledger;
     if (!lg) return null;
     const months = {};
-    lg.months.forEach(m => { months[m.month] = Object.assign({}, m, { students: m.students.map(s => Object.assign({}, s)) }); });
+    // 예전 서버 응답에는 학생 메모(detail)와 수업 하나하나(items)가 없을 수 있다
+    lg.months.forEach(m => { months[m.month] = Object.assign({}, m, { students: m.students.map(s => Object.assign({ detail: '' }, s, { items: (s.items || []).slice() })) }); });
     const month = key => months[key] || (months[key] = { month: key, amount: 0, minutes: 0, lessons: 0, unpriced: 0, students: [] });
     const n = abs(t.date, t.min);
     const today = { amount: 0, done: 0, total: 0 };
@@ -616,6 +631,43 @@ button { font: inherit; color: inherit; cursor: pointer; }
   }
 
   // ---------- 번 돈 장부 ----------
+  // 펼친 줄을 기억하는 열쇠: 달은 '2026-10', 학생은 '2026-10 김명세'
+  function foldable(d, key) {
+    d.open = bookOpened.has(key);
+    d.addEventListener('toggle', () => { if (d.open) bookOpened.add(key); else bookOpened.delete(key); });
+  }
+  function unfoldable(d) {
+    d.classList.add('is-empty');
+    d.querySelector('summary').addEventListener('click', e => e.preventDefault());
+  }
+
+  function studentRow(m, st) {
+    const d = el('details', 'student');
+    const s = el('summary');
+    const head = el('span', 's-head');
+    const who = el('span', 'who', st.name);
+    if (st.detail) who.append(el('small', null, st.detail));
+    const amount = el('span', 'won');
+    setWon(amount, st.amount);
+    const chev = el('span', 's-chev');
+    chev.setAttribute('aria-hidden', 'true');
+    head.append(who, el('span', 'hrs', `${st.lessons}번 · ${duration(st.minutes)}`), amount, chev);
+    s.append(head);
+    d.append(s);
+    if (st.items.length < st.lessons) { unfoldable(d); return d; } // 수업 하나하나를 모르는 예전 서버 응답
+    foldable(d, `${m.month} ${st.name}`);
+    const ul = el('ul', 's-list');
+    st.items.slice().sort((a, b) => a.date.localeCompare(b.date) || a.start - b.start).forEach(it => {
+      const w = el('span', 'won');
+      setWon(w, it.amount);
+      const li = el('li');
+      li.append(el('span', 'when num', `${+it.date.slice(5, 7)}/${+it.date.slice(8, 10)}(${WD[weekdayIdx(it.date)]}) ${clock(it.start)}–${clock(it.end)}`), w);
+      ul.append(li);
+    });
+    d.append(ul);
+    return d;
+  }
+
   function monthRow(m, current, max) {
     const d = el('details', 'month');
     const s = el('summary');
@@ -633,20 +685,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
     head.append(name, amount, chev, bar, el('span', 'm-sub', m.lessons ? `수업 ${m.lessons}개 · ${duration(m.minutes)}` : '아직 끝난 수업이 없어요'));
     s.append(head);
     d.append(s);
-    if (!m.students.length && !m.unpriced) {
-      d.classList.add('is-empty');
-      s.addEventListener('click', e => e.preventDefault());
-      return d;
-    }
-    d.open = bookOpened.has(m.month);
-    d.addEventListener('toggle', () => { if (d.open) bookOpened.add(m.month); else bookOpened.delete(m.month); });
+    if (!m.students.length && !m.unpriced) { unfoldable(d); return d; }
+    foldable(d, m.month);
     if (m.students.length) {
       const ul = el('ul', 'm-list');
       m.students.slice().sort((a, b) => b.amount - a.amount).forEach(st => {
-        const w = el('span', 'won');
-        setWon(w, st.amount);
         const li = el('li');
-        li.append(el('span', 'who', st.name), el('span', 'hrs', `${st.lessons}번 · ${duration(st.minutes)}`), w);
+        li.append(studentRow(m, st));
         ul.append(li);
       });
       d.append(ul);

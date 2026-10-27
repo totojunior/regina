@@ -171,14 +171,14 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .pill-btn { flex: none; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--ink); font-size: 13px; font-weight: 600; }
 .pill-btn:disabled { color: var(--ink-3); }
 
-/* ---------- 번 돈: 시간표 아래 오늘 / 이번 달 카드, 누르면 번 돈 장부 ---------- */
-.money { width: 100%; display: flex; align-items: center; margin: 14px 0 0; padding: 13px 4px 13px 16px; border: 0; border-radius: 20px; background: var(--card); box-shadow: var(--shadow); text-align: left; }
-.money .stat { flex: 1; min-width: 0; display: grid; gap: 1px; }
-.money .stat + .stat { margin-left: 14px; padding-left: 14px; border-left: 1px solid var(--line); }
-.money .k { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+/* ---------- 번 돈: 시간표 아래 오늘 / 이번 달 카드. 오늘을 누르면 날짜별, 이번 달을 누르면 달별 장부 ---------- */
+.money { display: flex; margin: 14px 0 0; border-radius: 20px; background: var(--card); box-shadow: var(--shadow); overflow: hidden; }
+.money .stat { flex: 1; min-width: 0; display: grid; gap: 1px; padding: 13px 14px 13px 16px; border: 0; background: transparent; text-align: left; }
+.money .stat:active { background: var(--line); }
+.money .stat + .stat { border-left: 1px solid var(--line); }
+.money .k { display: flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.money .k svg { flex: none; width: 13px; height: 13px; color: var(--ink-3); }
 .money .s { font-size: 12px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.money .chev { flex: none; width: 32px; display: grid; place-items: center; color: var(--ink-3); }
-.money .chev svg { width: 18px; height: 18px; }
 .won { font-family: var(--font-num); font-size: 24px; font-weight: 800; line-height: 1.25; letter-spacing: -.01em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .won .u { margin-left: 1px; font-family: var(--font-ui); font-size: .62em; font-weight: 700; color: var(--ink-2); }
 
@@ -210,22 +210,34 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .m-sub { grid-column: 1 / 3; font-size: 13px; color: var(--ink-2); }
 .m-list { margin: 0; padding: 0 16px 6px; list-style: none; }
 .m-list > li { border-top: 1px solid var(--line); }
-/* 학생 줄: 누르면 그 달의 수업 하나하나(날짜·시각·금액)가 펼쳐진다 */
-.student summary { display: block; padding: 9px 0; list-style: none; cursor: pointer; }
-.student summary::-webkit-details-marker { display: none; }
+/* 학생 줄(달별 장부)과 날짜 줄(날짜별 보기): 누르면 수업 하나하나가 펼쳐진다 */
+.student summary, .day summary { display: block; padding: 9px 0; list-style: none; cursor: pointer; }
+.student summary::-webkit-details-marker, .day summary::-webkit-details-marker { display: none; }
 .s-head { display: grid; grid-template-columns: minmax(0, 1fr) auto auto 12px; align-items: baseline; gap: 10px; font-size: 15px; }
 .s-head .who { font-weight: 600; overflow-wrap: anywhere; }
 .s-head .who small { margin-left: 5px; font-size: 12px; font-weight: 500; color: var(--ink-3); }
 .s-head .hrs { font-size: 12px; color: var(--ink-3); }
 .s-head .won { font-size: 15px; font-weight: 700; }
 .s-chev { align-self: center; justify-self: center; width: 6px; height: 6px; margin-top: -3px; border: solid var(--ink-3); border-width: 0 2px 2px 0; transform: rotate(45deg); transition: transform .2s; }
-.student[open] .s-chev { margin-top: 3px; transform: rotate(-135deg); }
+.student[open] .s-chev, .day[open] .s-chev { margin-top: 3px; transform: rotate(-135deg); }
 .student.is-empty summary { cursor: default; }
 .student.is-empty .s-chev { visibility: hidden; }
 .s-list { margin: 0; padding: 0 22px 10px 12px; list-style: none; }
 .s-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 4px 0; font-size: 14px; color: var(--ink-2); }
 .s-list .won { font-size: 13px; font-weight: 600; color: var(--ink-2); }
 .m-note { margin: -2px 16px 14px; font-size: 12px; color: var(--ink-3); }
+/* 날짜 줄: 접혀 있으면 그날 가르친 학생들, 펼치면 수업마다 시각·학생·금액 */
+.d-head { display: grid; grid-template-columns: minmax(0, 1fr) auto 12px; align-items: baseline; gap: 2px 10px; font-size: 15px; }
+.d-name { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+.d-name .tag { background: var(--next-bg); color: var(--next-ink); font-size: 11px; }
+.d-head .won { font-size: 15px; font-weight: 700; }
+.d-who { grid-column: 1 / 3; font-size: 13px; color: var(--ink-2); overflow-wrap: anywhere; }
+.day[open] .d-who { display: none; }
+.d-list { margin: 0; padding: 0 22px 10px 12px; list-style: none; }
+.d-list li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; gap: 10px; padding: 4px 0; font-size: 14px; color: var(--ink-2); }
+.d-list .who { font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.d-list .who small { margin-left: 5px; font-size: 12px; font-weight: 500; color: var(--ink-3); }
+.d-list .won { font-size: 13px; font-weight: 600; color: var(--ink-2); }
 .book-note { margin: 18px 6px 0; font-size: 12px; line-height: 1.55; color: var(--ink-3); word-break: keep-all; }
 
 /* ---------- 처음 연결 / 불러오는 중 ---------- */
@@ -282,11 +294,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
       <ol class="lessons" id="lessons"></ol>
     </section>
   </div>
-  <button class="money" id="money" type="button" aria-haspopup="dialog" hidden>
-    <span class="stat"><span class="k">오늘 번 돈</span><span class="won" id="todayWon"></span><span class="s" id="todaySub"></span></span>
-    <span class="stat"><span class="k" id="monthKey"></span><span class="won" id="monthWon"></span><span class="s" id="monthSub"></span></span>
-    <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>
-  </button>
+  <div class="money" id="money" hidden>
+    <button class="stat" id="todayBtn" type="button" aria-haspopup="dialog"><span class="k">오늘 번 돈<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span><span class="won" id="todayWon"></span><span class="s" id="todaySub"></span></button>
+    <button class="stat" id="monthBtn" type="button" aria-haspopup="dialog"><span class="k"><span id="monthKey"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span><span class="won" id="monthWon"></span><span class="s" id="monthSub"></span></button>
+  </div>
   <footer class="foot">
     <span id="updated"></span>
     <button class="pill-btn" id="refresh" type="button">새로고침</button>
@@ -296,7 +307,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 <div class="book" id="book" role="dialog" aria-modal="true" aria-labelledby="bookTitle" hidden>
   <header class="hero">
     <div class="hero-top"><span>토토네 과외</span><button class="icon-btn" id="bookClose" type="button" aria-label="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <p class="eyebrow"><span class="dot" aria-hidden="true"></span><span>GANANCIAS</span></p>
+    <p class="eyebrow"><span class="dot" aria-hidden="true"></span><span id="bookEyebrow">GANANCIAS</span></p>
     <h2 id="bookTitle">번 돈 장부</h2>
   </header>
   <div class="sheet">
@@ -355,8 +366,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
   let loading = false;
   let lastFetch = 0;
   let bookOpen = false;
+  let bookMode = 'months'; // 'months' 달별 장부, 'days' 날짜별 번 돈
+  let bookFrom = null;     // 장부를 연 버튼. 닫으면 여기로 돌아간다
   let bookSig = '';
-  const bookOpened = new Set(); // 장부에서 펼쳐 둔 달
+  const bookFolds = new Map(); // 장부에서 처음 모양과 다르게 펼치거나 접은 줄: 열쇠 → 펼쳤는지
 
   // ---------- 시간 (항상 한국 시간) ----------
   const dayNum = iso => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / 864e5;
@@ -631,10 +644,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
   }
 
   // ---------- 번 돈 장부 ----------
-  // 펼친 줄을 기억하는 열쇠: 달은 '2026-10', 학생은 '2026-10 김명세'
-  function foldable(d, key) {
-    d.open = bookOpened.has(key);
-    d.addEventListener('toggle', () => { if (d.open) bookOpened.add(key); else bookOpened.delete(key); });
+  // 펼친 줄을 기억하는 열쇠: 달은 '2026-10', 학생은 '2026-10 김명세', 날짜별 보기는 '일 2026-10', '일 2026-10-27'
+  // 처음에는 startOpen대로 두고(날짜별 보기는 이번 달과 오늘을 펼쳐서 연다), 손으로 바꾼 줄만 기억한다
+  function foldable(d, key, startOpen = false) {
+    d.open = bookFolds.has(key) ? bookFolds.get(key) : startOpen;
+    d.addEventListener('toggle', () => { if (d.open === startOpen) bookFolds.delete(key); else bookFolds.set(key, d.open); });
   }
   function unfoldable(d) {
     d.classList.add('is-empty');
@@ -668,7 +682,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
     return d;
   }
 
-  function monthRow(m, current, max) {
+  // 달 줄의 머리(이름·금액·막대). 펼친 안쪽은 달별 장부면 학생들, 날짜별 보기면 날짜들
+  function monthBox(m, current, max) {
     const d = el('details', 'month');
     const s = el('summary');
     const head = el('span', 'm-head');
@@ -685,6 +700,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
     head.append(name, amount, chev, bar, el('span', 'm-sub', m.lessons ? `수업 ${m.lessons}개 · ${duration(m.minutes)}` : '아직 끝난 수업이 없어요'));
     s.append(head);
     d.append(s);
+    return d;
+  }
+
+  function monthRow(m, current, max) {
+    const d = monthBox(m, current, max);
     if (!m.students.length && !m.unpriced) { unfoldable(d); return d; }
     foldable(d, m.month);
     if (m.students.length) {
@@ -700,8 +720,70 @@ button { font: inherit; color: inherit; cursor: pointer; }
     return d;
   }
 
+  // ---------- 날짜별 번 돈: 장부의 수업 하나하나를 학생 대신 날짜로 묶는다 ----------
+  function dayGroups(m) {
+    const days = {};
+    m.students.forEach(st => st.items.forEach(it => {
+      (days[it.date] = days[it.date] || []).push(Object.assign({ name: st.name, detail: st.detail }, it));
+    }));
+    return Object.keys(days).sort().reverse().map(date => ({
+      date,
+      amount: days[date].reduce((a, it) => a + it.amount, 0),
+      items: days[date].sort((a, b) => a.start - b.start),
+    }));
+  }
+
+  // 날짜 줄: 접혀 있으면 그날 가르친 학생들, 누르면 수업 하나하나(시각·학생·금액)가 펼쳐진다
+  function dayRow(x, isToday) {
+    const d = el('details', 'day');
+    const s = el('summary');
+    const head = el('span', 'd-head');
+    const name = el('span', 'd-name', `${+x.date.slice(8, 10)}일 ${WD[weekdayIdx(x.date)]}요일`);
+    if (isToday) name.append(el('span', 'tag', '오늘'));
+    const amount = el('span', 'won');
+    setWon(amount, x.amount);
+    const chev = el('span', 's-chev');
+    chev.setAttribute('aria-hidden', 'true');
+    head.append(name, amount, chev, el('span', 'd-who', [...new Set(x.items.map(it => it.name))].join(' · ')));
+    s.append(head);
+    d.append(s);
+    foldable(d, `일 ${x.date}`, isToday);
+    const ul = el('ul', 'd-list');
+    x.items.forEach(it => {
+      const who = el('span', 'who', it.name);
+      if (it.detail) who.append(el('small', null, it.detail));
+      const w = el('span', 'won');
+      setWon(w, it.amount);
+      const li = el('li');
+      li.append(el('span', 'num', `${clock(it.start)}–${clock(it.end)}`), who, w);
+      ul.append(li);
+    });
+    d.append(ul);
+    return d;
+  }
+
+  function monthDays(m, current, max, today) {
+    const d = monthBox(m, current, max);
+    const days = dayGroups(m);
+    const missing = m.lessons - days.reduce((a, x) => a + x.items.length, 0);
+    if (!days.length && !missing && !m.unpriced) { unfoldable(d); return d; }
+    foldable(d, `일 ${m.month}`, current);
+    if (days.length) {
+      const ul = el('ul', 'm-list');
+      days.forEach(x => {
+        const li = el('li');
+        li.append(dayRow(x, x.date === today));
+        ul.append(li);
+      });
+      d.append(ul);
+    }
+    if (missing > 0) d.append(el('p', 'm-note', `날짜가 남아 있지 않은 예전 수업 ${missing}개는 합계에만 들어 있어요`));
+    if (m.unpriced) d.append(el('p', 'm-note', `요금표에 없는 수업 ${m.unpriced}개는 빼고 셈했어요`));
+    return d;
+  }
+
   function renderBook(t, money) {
-    const sig = t.date + JSON.stringify(money.months);
+    const sig = bookMode + t.date + JSON.stringify(money.months);
     if (sig === bookSig) return; // 같은 내용이면 다시 그리지 않는다(펼친 달, 스크롤 유지)
     bookSig = sig;
     const max = Math.max(...money.months.map(m => m.amount));
@@ -714,15 +796,26 @@ button { font: inherit; color: inherit; cursor: pointer; }
       const title = el('h3', 'year-title');
       title.append(el('span', null, `${y}년`), el('span', 'num', `합계 ${won(list.reduce((a, m) => a + m.amount, 0))}`));
       const card = el('div', 'months');
-      list.forEach(m => card.append(monthRow(m, m.month === t.date.slice(0, 7), max)));
+      list.forEach(m => {
+        const current = m.month === t.date.slice(0, 7);
+        card.append(bookMode === 'days' ? monthDays(m, current, max, t.date) : monthRow(m, current, max));
+      });
       const sec = el('section', 'year');
       sec.append(title, card);
       box.append(sec);
     });
   }
 
-  function openBook() {
+  function setBookMode(mode) {
+    bookMode = mode;
+    $('bookEyebrow').textContent = mode === 'days' ? 'POR DÍA' : 'GANANCIAS';
+    $('bookTitle').textContent = mode === 'days' ? '날짜별 번 돈' : '번 돈 장부';
+  }
+
+  function openBook(mode, from) {
     bookOpen = true;
+    bookFrom = from;
+    setBookMode(mode);
     $('book').hidden = false;
     $('book').scrollTop = 0;
     render();
@@ -732,7 +825,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   function closeBook() {
     bookOpen = false;
     $('book').hidden = true;
-    if (!$('money').hidden) $('money').focus({ preventScroll: true });
+    if (bookFrom && !$('money').hidden) bookFrom.focus({ preventScroll: true });
   }
 
   function render() {
@@ -818,7 +911,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
   $('refresh').addEventListener('click', () => refresh());
   $('prevWeek').addEventListener('click', () => moveWeek(-1));
   $('nextWeek').addEventListener('click', () => moveWeek(1));
-  $('money').addEventListener('click', openBook);
+  $('todayBtn').addEventListener('click', e => openBook('days', e.currentTarget));
+  $('monthBtn').addEventListener('click', e => openBook('months', e.currentTarget));
   $('bookClose').addEventListener('click', closeBook);
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && bookOpen) closeBook(); });
 
@@ -854,7 +948,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
       payload = m.payload;
       previewNow = m.now;
       if (m.theme) document.documentElement.dataset.theme = m.theme;
-      if (m.overlay === 'book') bookOpen = true;
+      if (m.overlay === 'book') { bookOpen = true; setBookMode(m.bookMode || 'months'); }
       if (m.overlay) $(m.overlay).hidden = false;
       render();
     });
